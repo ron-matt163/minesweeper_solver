@@ -60,9 +60,6 @@ def click(board, state, known, x, y):
     hit_mine = False
     print("Click coordinates: ", x, y)
     state = reveal_board(board, state, x, y)
-    print("Shape of state: ", state.shape)
-    print("\nState after the most recent click:\n", state)
-    # print_colored_array(state)
     # Updating known
     for i in range(len(state)):
         for j in range(len(state[i])):
@@ -71,7 +68,7 @@ def click(board, state, known, x, y):
                     known[i][j] = 0
                 if state[i][j] == -1:
                     known[i][j] = 1
-    print("\nKnown: \n", known)
+    # print("\nKnown: \n", known)
 
     if -1 in state:
         hit_mine = True
@@ -91,6 +88,7 @@ def is_game_over(board, state, hit_mine):
 # Simpify the game by subtracting the values in each cell by the number of mines we have found
 def simplify_state(state, known):
     neighbor_counts = get_true_neighbor_count(known)
+    # making a copy of state because we don't want to modify the original 'state' while simplifying
     state_copy = state.copy()
     state_copy[~np.isnan(state_copy)] -= neighbor_counts[~np.isnan(state_copy)]
     return state_copy
@@ -99,29 +97,29 @@ def simplify_state(state, known):
 def infer_obvious_moves(state, known, probabilities):
     new_inference = True
     state = simplify_state(state, known == 1)
-    print("Simplified state: \n", state)
+    # print("Simplified state: \n", state)
     unknown_cells = np.isnan(state) & np.isnan(known)
-    print("Unknown cells: \n", unknown_cells)
+    # print("Unknown cells: \n", unknown_cells)
 
     while new_inference:
         # stores count of unopened and unknown neighbors
         unknown_neighbor_counts = get_true_neighbor_count(unknown_cells)
         # Finding cells for which the number assigned = number of unopened cells 
         solutions = (state == unknown_neighbor_counts) & (unknown_neighbor_counts > 0)
-        print("Solutions mines: \n", solutions)
+        # print("Solutions mines: \n", solutions)
         known_mines = unknown_cells & reduce(np.logical_or,
             [neighbors(x, y, state.shape) for y, x in zip(*solutions.nonzero())], np.zeros(state.shape, dtype=bool))
-        print("Known mines: ", known_mines)
+        # print("Known mines: ", known_mines)
         known[known_mines] = 1
         state = simplify_state(state, known_mines)
         unknown_cells = unknown_cells & ~known_mines
         unknown_neighbor_counts = get_true_neighbor_count(unknown_cells)
         # Squares with a 0 value that are unopened or are still unknown are marked here
         solutions = (state == 0) & (unknown_neighbor_counts > 0)
-        print("Solutions safe: \n", solutions)
+        # print("Solutions safe: \n", solutions)
         known_safe = unknown_cells & reduce(np.logical_or,
             [neighbors(x, y, state.shape) for y, x in zip(*solutions.nonzero())], np.zeros(state.shape, dtype=bool))
-        print("Known safe: ", known_safe)
+        # print("Known safe: ", known_safe)
         known[known_safe] = 0
         unknown_cells = unknown_cells & ~known_safe
 
@@ -130,17 +128,51 @@ def infer_obvious_moves(state, known, probabilities):
         new_inference = (known_safe | known_mines).any()
     return known, probabilities
 
+def find_nbr_mine_probabilities(state, known, probabilities):
+    state = simplify_state(state, known == 1)
+    unknown_cells = np.isnan(state) & np.isnan(known)
+    unknown_neighbor_counts = get_true_neighbor_count(unknown_cells)
+    assigned_probs = np.empty(probabilities.shape, dtype=object)
+    
+    # print("Probabilities before finding approximate probabilities through heuristics:\n", probabilities)
+    # Initializing each element in this array with an empty list
+    for i in range(assigned_probs.shape[0]):
+        for j in range(assigned_probs.shape[0]):
+            assigned_probs[i, j] = []
 
+    for i in range(len(state)):
+        for j in range(len(state[i])):
+            if state[i][j] > 0 and unknown_neighbor_counts[i][j] > 0:
+                neighbor_probabilities = state[i][j]/unknown_neighbor_counts[i][j]
+                neighborhood_offsets = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+                for dr, dc in neighborhood_offsets:
+                    neighbor_row, neighbor_col = i + dr, j + dc
+                    if 0 <= neighbor_row < len(state) and 0 <= neighbor_col < len(state[i]):
+                        if np.isnan(state[neighbor_row, neighbor_col]) and known[neighbor_row][neighbor_col] != 1:
+                            assigned_probs[neighbor_row, neighbor_col].append(neighbor_probabilities)
+
+    # print("Assigned probabilities:\n", assigned_probs)
+    sum_assigned_probabilities = avg_3d_array_to_2d(assigned_probs)
+    # print("Mean assigned probabilities:\n", sum_assigned_probabilities)
+    probabilities = replace_nan_with_assigned(probabilities, sum_assigned_probabilities)
+    # print("Probabilities after approximating unknown neighbor probabilities:\n", probabilities)    
+
+    return known, probabilities
+
+# Note that all the probabilities returned by this function is the approximate probability
+# The probabilities returned by this function are not actual probabilities, they are likelihoods
+# that inform the caller about the relative likelihood of a cell being a mine
 def update_state_and_probabilities(state, known, probabilities):
     known, probabilities = infer_obvious_moves(state, known, probabilities)
     # checking if "certain" probabilities have been assigned to any of the tiles
-    print("State after update: \n", state)
-    print("Known after update: \n", known)
-    print("Probabilities after update: \n", probabilities)    
+    # print("State after update: \n", state)
+    # print("Known after update: \n", known)
+    # print("Probabilities after update: \n", probabilities)    
     if ~np.isnan(probabilities).all() and 0 in probabilities:
         return state, known, probabilities
-
-
+    # If there are no obvious moves to make, approximate probabilities are calculated
+    known, probabilities = find_nbr_mine_probabilities(state, known, probabilities)
+    return state, known, probabilities
 
 
 def play_minesweeper(board, num_rows, num_cols, mine_count):
@@ -154,25 +186,40 @@ def play_minesweeper(board, num_rows, num_cols, mine_count):
     # We're 'clicking' on the minesweeper board at x,y here
     state, known, hit_mine = click(board, state, known, x, y)
     while not is_game_over(board, state, hit_mine):
-        # x, y = next_click(board, state, known, probabilities)
+        # Reinitializing probabilities to avoid clicking on the same tile over and over again
+        probabilities = np.full((num_rows, num_cols), np.nan, dtype=float)
         state, known, probabilities = update_state_and_probabilities(state, known, probabilities)
-        print("State after update: \n", state)
-        print("Known after update: \n", known)
-        print("Probabilities after update: \n", probabilities)
-
+        # print("State after update: \n", state)
+        # print("Known after update: \n", known)
+        # print("Probabilities after update: \n", probabilities)
+        # "least_probability" means least probability of being a mine 
         least_probability = np.nanmin(probabilities)
-        print("Least probability: ", least_probability)
+        print("Least likelihood: ", least_probability)
         safest_xs, safest_ys = (probabilities == least_probability).nonzero()
         print(f"Safest Xs: {safest_xs}, safest Ys: {safest_ys}")
-        for x, y in zip(safest_xs, safest_ys):
+        
+        if least_probability != 0:
+            threshold = 0.5/8
+            # Enter this block if the sum of probabilities assigned to the cell with the least probability is greater than 0.5
+            # Threshold is 0.5/8 because this sum of probabilities is divided by 8
+            if least_probability >= threshold:
+                # If the least likelihood is above a certain threshold, randomly pick an element
+                x, y = random_select_unknown_cell(known)
+            # Pick any one tile with the least likelihood
+            idx = random.randint(0, len(safest_xs) - 1)
+            x, y = safest_xs[idx], safest_ys[idx]
             state, known, hit_mine = click(board, state, known, x, y)
+        else:       
+            for x, y in zip(safest_xs, safest_ys):
+                state, known, hit_mine = click(board, state, known, x, y)
+        print("State after click:\n", state)
 
-    if hit_mine == False:
-        print("You Win!")
-        # break
+    if not hit_mine:
+        print("YOU WIN!")
 
-        # for x, y in zip(*(probabilities == 1).nonzero()):
-            # GUI STUFF LATER
+    print("\nState when game is over: \n",state)
+    print("\nInitial board for reference: \n", board)
+
 
 
         

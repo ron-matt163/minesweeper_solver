@@ -58,3 +58,41 @@ def get_true_neighbor_count(arr):
     ftr = np.array([[1,1,1],[1,0,1],[1,1,1]])
     # print("Arr: ", arr)
     return convolve2d(arr, ftr, mode='same')
+
+# Sums the probabilities of unknown tiles surrounded by more than 1 open tiles and scales them down to ensure it is < 1
+def avg_3d_array_to_2d(input_arr):
+    output_arr = np.full(input_arr.shape, np.nan, dtype=float)
+    for i in range(len(input_arr)):
+        for j in range(len(input_arr[i])):
+            if len(input_arr[i][j]) > 0:
+                output_arr[i][j] = np.sum(input_arr[i][j])/8
+
+    # non_nan_mask = ~np.isnan(output_arr)
+    # min_val = np.nanmin(output_arr)  # Find minimum value excluding NaN
+    # max_val = np.nanmax(output_arr)  # Find maximum value excluding NaN
+    # if max_val != min_val:
+    #     # normalize to value between 0.05 and 0.95
+    #     normalized_output = ((output_arr - min_val) / (max_val - min_val)) * 0.9 + 0.05
+    # else:
+    #     normalized_output = np.ones(output_arr.shape)
+
+    # # Apply the mask to keep NaN values unchanged
+    # normalized_output[~non_nan_mask] = np.nan
+
+    return output_arr
+
+
+def replace_nan_with_assigned(probabilities, mean_assigned_probabilities):
+    for i in range(len(probabilities)):
+        for j in range(len(probabilities[i])):
+            if np.isnan(probabilities[i][j]) and ~np.isnan(mean_assigned_probabilities[i][j]):
+                probabilities[i][j] = mean_assigned_probabilities[i][j]
+    return probabilities
+
+def random_select_unknown_cell(known):
+    true_indices = np.argwhere(np.isnan(known))
+    rand_idx = np.random.choice(len(true_indices))
+    selected_idx = true_indices[rand_idx]
+    x, y = selected_idx[0], selected_idx[1]
+
+    return x, y
