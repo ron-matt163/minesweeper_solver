@@ -15,7 +15,7 @@ if __name__ == "__main__":
             num_rows, num_cols, mine_count = 30, 16, 99
     elif sys.argv[1] == "custom":
         if len(sys.argv) == 5:
-            num_rows, num_cols, mine_count = sys.argv[2], sys.argv[3], sys.argv[4]
+            num_rows, num_cols, mine_count = int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
             if mine_count > num_rows * num_cols:
                 print("Invalid configuration: You cannot have more mines than the number of cells")
                 exit(1)

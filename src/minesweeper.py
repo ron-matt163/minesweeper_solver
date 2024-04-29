@@ -1,7 +1,6 @@
 import numpy as np
 import random
 from helper import *
-from scipy.signal import convolve2d
 from functools import reduce
 
 def get_surrounding_mine_count(board, row, col):
@@ -137,7 +136,7 @@ def find_nbr_mine_probabilities(state, known, probabilities):
     # print("Probabilities before finding approximate probabilities through heuristics:\n", probabilities)
     # Initializing each element in this array with an empty list
     for i in range(assigned_probs.shape[0]):
-        for j in range(assigned_probs.shape[0]):
+        for j in range(assigned_probs.shape[1]):
             assigned_probs[i, j] = []
 
     for i in range(len(state)):
@@ -206,8 +205,9 @@ def play_minesweeper(board, num_rows, num_cols, mine_count):
                 # If the least likelihood is above a certain threshold, randomly pick an element
                 x, y = random_select_unknown_cell(known)
             # Pick any one tile with the least likelihood
-            idx = random.randint(0, len(safest_xs) - 1)
-            x, y = safest_xs[idx], safest_ys[idx]
+            else:
+                idx = random.randint(0, len(safest_xs) - 1)
+                x, y = safest_xs[idx], safest_ys[idx]
             state, known, hit_mine = click(board, state, known, x, y)
         else:       
             for x, y in zip(safest_xs, safest_ys):
