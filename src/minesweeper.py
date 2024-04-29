@@ -174,7 +174,8 @@ def update_state_and_probabilities(state, known, probabilities):
     return state, known, probabilities
 
 
-def play_minesweeper(board, num_rows, num_cols, mine_count):
+def play_minesweeper(board, num_rows, num_cols, mine_count): 
+    clicks = 0
     state = np.full((num_rows, num_cols), np.nan, dtype=float)
     # In 'known', a cells are given the value 1 if it is a mine for sure, 0 if it is not a mine for sure
     # 'np.nan' otherwise 
@@ -184,6 +185,7 @@ def play_minesweeper(board, num_rows, num_cols, mine_count):
     x, y = random.randint(0, num_rows-1), random.randint(0, num_cols-1)
     # We're 'clicking' on the minesweeper board at x,y here
     state, known, hit_mine = click(board, state, known, x, y)
+    clicks += 1
     while not is_game_over(board, state, hit_mine):
         # Reinitializing probabilities to avoid clicking on the same tile over and over again
         probabilities = np.full((num_rows, num_cols), np.nan, dtype=float)
@@ -201,24 +203,35 @@ def play_minesweeper(board, num_rows, num_cols, mine_count):
             threshold = 0.5/8
             # Enter this block if the sum of probabilities assigned to the cell with the least probability is greater than 0.5
             # Threshold is 0.5/8 because this sum of probabilities is divided by 8
-            if least_probability >= threshold:
-                # If the least likelihood is above a certain threshold, randomly pick an element
+            if least_probability >= threshold or np.isnan(least_probability):
+                # If the least likelihood is above a certain threshold, randomly pick an unknown tile
                 x, y = random_select_unknown_cell(known)
             # Pick any one tile with the least likelihood
             else:
                 idx = random.randint(0, len(safest_xs) - 1)
                 x, y = safest_xs[idx], safest_ys[idx]
             state, known, hit_mine = click(board, state, known, x, y)
+            clicks += 1
         else:       
             for x, y in zip(safest_xs, safest_ys):
                 state, known, hit_mine = click(board, state, known, x, y)
+                clicks += 1
         print("State after click:\n", state)
-
-    if not hit_mine:
-        print("YOU WIN!")
 
     print("\nState when game is over: \n",state)
     print("\nInitial board for reference: \n", board)
+    board_completion = np.sum(~np.isnan(state))/state.size
+
+    if hit_mine:
+        print("\n\nYOU HIT A MINE! GAME OVER!")
+        win = 0
+    else:
+        print("\n\nYOU WIN!")
+        win = 1
+
+    return win, board_completion, clicks
+
+
 
 
 
