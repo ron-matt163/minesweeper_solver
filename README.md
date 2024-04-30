@@ -1,6 +1,6 @@
 # Solving Minesweeper using a Probabilistic Approach
 
-## How to run this stochastic minesweeper program
+## How to run this stochastic minesweeper solver
 Step 1: Enter the /src folder which contains all of the code files
 
 Step 2: If you want to make the program solve a custom sized minesweeper board, you can run the following command:
