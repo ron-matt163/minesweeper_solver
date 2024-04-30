@@ -20,12 +20,14 @@ If you want the program to solve a 32X16 board with 80 mines, run `python main.p
 You can how the state of the board change with each click/move on the terminal. Once the game complete, you
 can see stats related to the game (like whether the game was won, no. of clicks,  % of board completion).
 
+## Running a performance test on the stochastic minesweeper solver
 You can make the program the minesweeper game using the stochastic approach 500 times for a given board size if you run the command:
 
 `python test_stochastic.py custom <num_rows> <num_cols> <num_of_mines>`
 
 *Please give it a few minutes for the test to complete execution. It is bound to take time since the minesweeper game runs 500 times*
 
+## Running a performance test on the Knowledge-Based Minesweeper Solver
 You can make the program the minesweeper game using the knowledge-based approach 500 times for a given board size if you run the command:
 
 `python test_KB.py custom <num_rows> <num_cols> <num_of_mines>`

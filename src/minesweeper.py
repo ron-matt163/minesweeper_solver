@@ -70,14 +70,12 @@ def click(board, state, known, x, y):
                     known[i][j] = 0
                 if state[i][j] == -1:
                     known[i][j] = 1
-    # print("\nKnown: \n", known)
 
     if -1 in state:
         hit_mine = True
 
     if (sys.argv[0])[-7:] == "main.py":
         sleep(1)
-        print("Calling update GUI")
         update_gui(state)
     return state, known, hit_mine
 
@@ -105,29 +103,23 @@ def simplify_state(state, known):
 def infer_obvious_moves(state, known, probabilities):
     new_inference = True
     state = simplify_state(state, known == 1)
-    # print("Simplified state: \n", state)
     unknown_cells = np.isnan(state) & np.isnan(known)
-    # print("Unknown cells: \n", unknown_cells)
 
     while new_inference:
         # stores count of unopened and unknown neighbors
         unknown_neighbor_counts = get_true_neighbor_count(unknown_cells)
         # Finding cells for which the number assigned = number of unopened cells 
         solutions = (state == unknown_neighbor_counts) & (unknown_neighbor_counts > 0)
-        # print("Solutions mines: \n", solutions)
         known_mines = unknown_cells & reduce(np.logical_or,
             [neighbors(x, y, state.shape) for y, x in zip(*solutions.nonzero())], np.zeros(state.shape, dtype=bool))
-        # print("Known mines: ", known_mines)
         known[known_mines] = 1
         state = simplify_state(state, known_mines)
         unknown_cells = unknown_cells & ~known_mines
         unknown_neighbor_counts = get_true_neighbor_count(unknown_cells)
         # Squares with a 0 value that are unopened or are still unknown are marked here
         solutions = (state == 0) & (unknown_neighbor_counts > 0)
-        # print("Solutions safe: \n", solutions)
         known_safe = unknown_cells & reduce(np.logical_or,
             [neighbors(x, y, state.shape) for y, x in zip(*solutions.nonzero())], np.zeros(state.shape, dtype=bool))
-        # print("Known safe: ", known_safe)
         known[known_safe] = 0
         unknown_cells = unknown_cells & ~known_safe
 
@@ -143,7 +135,6 @@ def find_nbr_mine_probabilities(state, known, probabilities):
     unknown_neighbor_counts = get_true_neighbor_count(unknown_cells)
     assigned_probs = np.empty(probabilities.shape, dtype=object)
     
-    # print("Probabilities before finding approximate probabilities through heuristics:\n", probabilities)
     # Initializing each element in this array with an empty list
     for i in range(assigned_probs.shape[0]):
         for j in range(assigned_probs.shape[1]):
@@ -160,11 +151,8 @@ def find_nbr_mine_probabilities(state, known, probabilities):
                         if np.isnan(state[neighbor_row, neighbor_col]) and known[neighbor_row][neighbor_col] != 1:
                             assigned_probs[neighbor_row, neighbor_col].append(neighbor_probabilities)
 
-    # print("Assigned probabilities:\n", assigned_probs)
     sum_assigned_probabilities = avg_3d_array_to_2d(assigned_probs)
-    # print("Mean assigned probabilities:\n", sum_assigned_probabilities)
     probabilities = replace_nan_with_assigned(probabilities, sum_assigned_probabilities)
-    # print("Probabilities after approximating unknown neighbor probabilities:\n", probabilities)    
 
     return known, probabilities
 
@@ -173,10 +161,7 @@ def find_nbr_mine_probabilities(state, known, probabilities):
 # that inform the caller about the relative likelihood of a cell being a mine
 def update_state_and_probabilities(state, known, probabilities):
     known, probabilities = infer_obvious_moves(state, known, probabilities)
-    # checking if "certain" probabilities have been assigned to any of the tiles
-    # print("State after update: \n", state)
-    # print("Known after update: \n", known)
-    # print("Probabilities after update: \n", probabilities)    
+    # checking if "certain" probabilities have been assigned to any of the tiles  
     if ~np.isnan(probabilities).all() and 0 in probabilities:
         return state, known, probabilities
     # If there are no obvious moves to make, approximate probabilities are calculated
@@ -202,9 +187,6 @@ def play_minesweeper_stochastic(board, num_rows, num_cols, mine_count):
         # Reinitializing probabilities to avoid clicking on the same tile over and over again
         probabilities = np.full((num_rows, num_cols), np.nan, dtype=float)
         state, known, probabilities = update_state_and_probabilities(state, known, probabilities)
-        # print("State after update: \n", state)
-        # print("Known after update: \n", known)
-        # print("Probabilities after update: \n", probabilities)
         # "least_probability" means least probability of being a mine 
         least_probability = np.nanmin(probabilities)
         print("Least likelihood: ", least_probability)
@@ -241,6 +223,9 @@ def play_minesweeper_stochastic(board, num_rows, num_cols, mine_count):
         print("\n\nYOU WIN!")
         win = 1
 
+    if (sys.argv[0])[-7:] == "main.py":
+        update_gui(state, game_over=True)
+        
     return win, board_completion, clicks
 
 
