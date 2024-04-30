@@ -1,5 +1,5 @@
 import sys
-from minesweeper import create_minesweeper_board, play_minesweeper
+from minesweeper import create_minesweeper_board, play_minesweeper_stochastic
 
 if __name__ == "__main__":
     num_rows, num_cols, mine_count = 0, 0, 0
@@ -7,12 +7,12 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         num_rows, num_cols, mine_count = 8, 8, 10
     elif len(sys.argv) == 2:
-        if sys.argv[1] == "beginner":
-            num_rows, num_cols, mine_count = 8, 8, 10
-        elif sys.argv[1] == "intermediate":
-            num_rows, num_cols, mine_count = 16, 16, 40
-        elif sys.argv[1] == "expert":
-            num_rows, num_cols, mine_count = 30, 16, 99
+        if sys.argv[1] == "easy":
+            num_rows, num_cols, mine_count = 8, 8, 8
+        elif sys.argv[1] == "medium":
+            num_rows, num_cols, mine_count = 16, 16, 32
+        elif sys.argv[1] == "hard":
+            num_rows, num_cols, mine_count = 32, 16, 80
     elif sys.argv[1] == "custom":
         if len(sys.argv) == 5:
             num_rows, num_cols, mine_count = int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
@@ -29,5 +29,5 @@ if __name__ == "__main__":
 
     minesweeper_board = create_minesweeper_board(num_rows, num_cols, mine_count)
     print("\n\nGenerated Minesweeper Board:\n", minesweeper_board)
-    win, board_completion, clicks = play_minesweeper(minesweeper_board, num_rows, num_cols, mine_count)
+    win, board_completion, clicks = play_minesweeper_stochastic(minesweeper_board, num_rows, num_cols, mine_count)
     print(f"\nWin = {win==1}, Board completion % = {board_completion*100},  Clicks = {clicks}")

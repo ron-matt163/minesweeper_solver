@@ -93,6 +93,7 @@ def simplify_state(state, known):
     return state_copy
 
 
+# Uses a knowledge-based approach to find certain mines and certain safe tiles
 def infer_obvious_moves(state, known, probabilities):
     new_inference = True
     state = simplify_state(state, known == 1)
@@ -126,6 +127,7 @@ def infer_obvious_moves(state, known, probabilities):
         probabilities[known_safe], probabilities[known_mines] = 0, 1
         new_inference = (known_safe | known_mines).any()
     return known, probabilities
+
 
 def find_nbr_mine_probabilities(state, known, probabilities):
     state = simplify_state(state, known == 1)
@@ -173,8 +175,8 @@ def update_state_and_probabilities(state, known, probabilities):
     known, probabilities = find_nbr_mine_probabilities(state, known, probabilities)
     return state, known, probabilities
 
-
-def play_minesweeper(board, num_rows, num_cols, mine_count): 
+# Plays minesweeper using a stochastic approach
+def play_minesweeper_stochastic(board, num_rows, num_cols, mine_count): 
     clicks = 0
     state = np.full((num_rows, num_cols), np.nan, dtype=float)
     # In 'known', a cells are given the value 1 if it is a mine for sure, 0 if it is not a mine for sure
@@ -230,9 +232,6 @@ def play_minesweeper(board, num_rows, num_cols, mine_count):
         win = 1
 
     return win, board_completion, clicks
-
-
-
 
 
         
