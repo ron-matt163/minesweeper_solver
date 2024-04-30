@@ -2,6 +2,9 @@ import numpy as np
 import random
 from helper import *
 from functools import reduce
+from gui import setup_gui, update_gui
+from time import sleep
+import sys
 
 def get_surrounding_mine_count(board, row, col):
     # Define the neighborhood indices around the target element (row, col)
@@ -71,6 +74,11 @@ def click(board, state, known, x, y):
 
     if -1 in state:
         hit_mine = True
+
+    if (sys.argv[0])[-7:] == "main.py":
+        sleep(1)
+        print("Calling update GUI")
+        update_gui(state)
     return state, known, hit_mine
 
 def is_game_over(board, state, hit_mine):
@@ -179,6 +187,8 @@ def update_state_and_probabilities(state, known, probabilities):
 def play_minesweeper_stochastic(board, num_rows, num_cols, mine_count): 
     clicks = 0
     state = np.full((num_rows, num_cols), np.nan, dtype=float)
+    if (sys.argv[0])[-7:] == "main.py": 
+        setup_gui(num_rows, num_cols, state)
     # In 'known', a cells are given the value 1 if it is a mine for sure, 0 if it is not a mine for sure
     # 'np.nan' otherwise 
     known = np.full((num_rows, num_cols), np.nan, dtype=float)
@@ -222,7 +232,7 @@ def play_minesweeper_stochastic(board, num_rows, num_cols, mine_count):
 
     print("\nState when game is over: \n",state)
     print("\nInitial board for reference: \n", board)
-    board_completion = np.sum(~np.isnan(state))/state.size
+    board_completion = np.sum(~np.isnan(state))/(state.size-mine_count)
 
     if hit_mine:
         print("\n\nYOU HIT A MINE! GAME OVER!")

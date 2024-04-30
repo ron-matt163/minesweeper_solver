@@ -1,5 +1,6 @@
 import sys
 from minesweeper import create_minesweeper_board, play_minesweeper_stochastic
+from gui import gui_mainloop
 
 if __name__ == "__main__":
     num_rows, num_cols, mine_count = 0, 0, 0
@@ -31,3 +32,4 @@ if __name__ == "__main__":
     print("\n\nGenerated Minesweeper Board:\n", minesweeper_board)
     win, board_completion, clicks = play_minesweeper_stochastic(minesweeper_board, num_rows, num_cols, mine_count)
     print(f"\nWin = {win==1}, Board completion % = {board_completion*100},  Clicks = {clicks}")
+    gui_mainloop()

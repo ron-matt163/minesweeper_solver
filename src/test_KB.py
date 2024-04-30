@@ -41,7 +41,7 @@ def play_minesweeper_KB(board, num_rows, num_cols, mine_count):
 
     print("\nState when game is over: \n",state)
     print("\nInitial board for reference: \n", board)
-    board_completion = np.sum(~np.isnan(state))/state.size
+    board_completion = np.sum(~np.isnan(state))/(state.size-mine_count)
 
     if hit_mine:
         print("\n\nYOU HIT A MINE! GAME OVER!")
